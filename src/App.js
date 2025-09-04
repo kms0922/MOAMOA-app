@@ -1,4 +1,5 @@
 import React from "react";
+import Calendar from "./Calendar";
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
 
       <main style={styles.main}>
         <section style={styles.calendarSection}>
-          <p>여기에 캘린더가 표시됩니다.</p>
+          <Calendar />
         </section>
 
         <aside style={styles.statsSection}>
@@ -56,13 +57,13 @@ const styles = {
     flex: 1,
     display: 'flex',
     padding: '1rem',
-    overFlowY: 'auto',
+    overflowY: 'auto',
   },
   calendarSection: {
     flex: 3,
     marginRight: '1rem',
-    padding: '1rem',
-    border: '1px dashed #ccc',
+    //padding: '1rem',
+    //border: '1px dashed #ccc',
   },
   statsSection: {
     flex: 1,
