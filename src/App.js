@@ -1,21 +1,64 @@
-import React from "react";
+import React, { useState } from "react";
 import Calendar from "./Calendar";
+import EntryModal from "./EntryModal";
 
 function App() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const [entries, setEntries] = useState({});
+  
+  const handlePrevMonth = () => {
+    setCurrentDate(prevDate => new Date(prevDate.getFullYear(), prevDate.getMonth() - 1, 1));
+  };
+  const handleNextMonth = () => {
+    setCurrentDate(prevDate => new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 1));
+  };
+
+  const handleDateClick = (date) => {
+    console.log("날짜 클릭됨:", date);
+    setSelectedDate(date);
+    setIsModalOpen(true);
+  };
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedDate(null);
+  };
+
+  const handleSaveEntry = (entryData) => {
+    const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
+
+    const existingEntries = entries[dateKey] || [];
+    const newEntriesForDate = [...existingEntries, { id: Date.now(), ...entryData}];
+
+    setEntries({
+      ...entries,
+      [dateKey]: newEntriesForDate,
+    });
+    
+    handleCloseModal();
+  };
+
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
         <h1>MOAMOA</h1>
         <div style={styles.navigation}>
-          <button>&lt;</button>
-          <h2>2025년 9월</h2>
-          <button>&gt;</button>
+          <button onClick={handlePrevMonth}>&lt;</button>
+          <h2>{`${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`}</h2>
+          <button onClick={handleNextMonth}>&gt;</button>
         </div>
       </header>
 
       <main style={styles.main}>
         <section style={styles.calendarSection}>
-          <Calendar />
+          <Calendar 
+            currentDate={currentDate}
+            onDateClick={handleDateClick}
+            entries={entries}
+            />
         </section>
 
         <aside style={styles.statsSection}>
@@ -25,6 +68,15 @@ function App() {
       </main>
 
       <button style={styles.fab}>+</button>
+
+      {selectedDate && (
+        <EntryModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          date={selectedDate}
+          onSave={handleSaveEntry}
+        />
+      )}
     </div>
   );
 }
