@@ -1,11 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 
-const Calendar = ({ currentDate, onDateClick, entries }) => {
-    const dateToUse = currentDate || new Date();
-    const currentEntries = entries || {};
-
-    const year = dateToUse.getFullYear();
-    const month = dateToUse.getMonth();
+const Calendar = ({ currentDate, onDateClick, entries, selectedDate }) => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
 
     const firstDayOfMonth = new Date(year, month, 1).getDay();
     const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
@@ -26,17 +23,28 @@ const Calendar = ({ currentDate, onDateClick, entries }) => {
             const fullDate = new Date(year, month, date);
             const dateKey = `${year}-${month}-${date}`;
             const dayEntries = entries[dateKey] || [];
+            
+            const isSelected = selectedDate && 
+                               selectedDate.getFullYear() === year &&
+                               selectedDate.getMonth() === month &&
+                               selectedDate.getDate() === date;
+
+            const cellStyle = {
+                ...styles.dayCell,
+                position: 'relative',
+                backgroundColor: isSelected ? '#eaf6ff' : 'white',
+                fontWeight: isSelected ? 'bold' : 'normal',
+            };
 
             calendarDays.push(
-                <div key={`date-${date}`} style={{...styles.dayCell, position: 'relative'}} onClick={() => onDateClick(fullDate)}>
+                <div key={`date-${date}`} style={cellStyle} onClick={() => onDateClick(fullDate)}>
                     {date}
                     {dayEntries.length > 0 && <div style={styles.entryIndicator}></div>}
                 </div>
             );
         }
         
-        return calendarDays;_
-
+        return calendarDays;
     };
 
     return (
@@ -66,14 +74,15 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100px',
+        height: '80px',
         border: '1px solid #f0f0f0',
         borderRadius: '8px',
         cursor: 'pointer',
+        transition: 'background-color 0.2s',
     },
     entryIndicator: {
         position: 'absolute',
-        bottom: '10px',
+        bottom: '8px',
         width: '6px',
         height: '6px',
         borderRadius: '50%',
@@ -82,3 +91,4 @@ const styles = {
 };
 
 export default Calendar;
+
