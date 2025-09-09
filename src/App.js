@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Calendar from "./Calendar";
 import EntryDetail from "./EntryDetail";
 
@@ -40,6 +40,28 @@ function App() {
   
   const selectedDateEntries = selectedDate ? entries[`${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`] || [] : [];
 
+  const monthlyStats = useMemo(() => {
+    const currentMonthEntries = [];
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    for (const dateKey in entries) {
+      const [year, month] = dateKey.split('-').map(Number);
+
+      if (year === currentYear && month === currentMonth) {
+        currentMonthEntries.push(...entries[dateKey]);
+      }
+    }
+
+    const totalAmount = currentMonthEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const categoryAmounts = currentMonthEntries.reduce((acc, entry) => {
+      acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
+      return acc;
+    }, {});
+    
+    return { totalAmount, categoryAmounts };
+  }, [entries, currentDate]);
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -71,7 +93,24 @@ function App() {
 
         <aside style={styles.statsSection}>
           <h3>이달의 지출 통계</h3>
-          <p>여기에 통계가 표시됩니다.</p>
+          <div>
+            <strong>총 지출:</strong> {monthlyStats.totalAmount.toLocaleString()}원
+          </div>
+          <hr style={styles.hr} />
+          <div>
+            <strong>카테고리별 지출:</strong>
+            {Object.keys(monthlyStats.categoryAmounts).length > 0 ? (
+              <ul style={styles.categoryList}>
+                {Object.entries(monthlyStats.categoryAmounts).map(([category, amount]) => (
+                  <li key={category}>
+                    {category}: {amount.toLocaleString()}원
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{textAlign: 'center', color: '#888', marginTop: '1rem'}}>내역 없음</p>
+            )}
+          </div>
         </aside>
       </main>
 
@@ -120,6 +159,16 @@ const styles = {
       padding: '1rem',
       border: '1px dashed #ccc',
       backgroundColor: '#f1f3f5',
+    },
+    hr: {
+      border: 'none',
+      borderTop: '1px solid #ddd',
+      margin: '0.5rem 0',
+    },
+    categoryList: {
+      listStyle: 'none',
+      padding: 0,
+      marginTop: '0.5rem',
     },
     fab: {
       position: 'fixed',
