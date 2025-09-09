@@ -3,16 +3,34 @@ import React, { useState } from 'react';
 const EntryDetail = ({ date, entries, onSave, onClose }) => {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
+  const [imagePreveiw, setImagePreveiw] = useState(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreveiw(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = () => {
     if (!amount || !category) {
       alert('금액과 카테고리를 모두 입력해주세요.');
       return;
     }
-    onSave({ amount: parseFloat(amount), category });
-    // 저장 후 입력 필드 초기화
+    onSave({ 
+      amount: parseFloat(amount), 
+      category,
+      image: imagePreveiw
+    });
+  
+
     setAmount('');
     setCategory('');
+    setImagePreveiw(null);
   };
 
   return (
@@ -26,8 +44,13 @@ const EntryDetail = ({ date, entries, onSave, onClose }) => {
         {entries.length > 0 ? (
           entries.map(entry => (
             <div key={entry.id} style={styles.entryItem}>
-              <span>{entry.category}</span>
-              <span>{entry.amount.toLocaleString()}원</span>
+              {entry.image && (
+                <img src={entry.image} alt={entry.category} style={styles.entryImage} />
+              )}
+              <div style={styles.entryText}>
+                <span>{entry.category}</span>
+                <span>{entry.amount.toLocaleString()}원</span>
+              </div>
             </div>
           ))
         ) : (
@@ -52,8 +75,16 @@ const EntryDetail = ({ date, entries, onSave, onClose }) => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
+        <label style={styles.imageUploadButton}>
+          <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+        </label>
         <button onClick={handleSave} style={styles.saveButton}>추가</button>
       </div>
+      {imagePreveiw && (
+        <div style={styles.preveiwContainer}>
+          <img src={imagePreveiw} alt="Preview" style={styles.preveiwImage} />
+        </div>
+      )}
     </div>
   );
 };
@@ -80,14 +111,28 @@ const styles = {
         cursor: 'pointer'
     },
     entryList: {
-        maxHeight: '150px',
+        maxHeight: '200px',
         overflowY: 'auto',
     },
     entryItem: {
         display: 'flex',
-        justifyContent: 'space-between',
+        alignItems: 'center',
         padding: '0.5rem 0',
         borderBottom: '1px solid #eee',
+    },
+    entryImage: {
+        width: '70px',
+        height: '70px',
+        borderRadius: '4px',
+        marginRight: '10px',
+        objectFit: 'cover',
+    },
+    entryText: {
+        flex: 1,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '18px',
     },
     noEntryText: {
         textAlign: 'center',
@@ -108,6 +153,17 @@ const styles = {
         border: '1px solid #ccc',
         borderRadius: '5px',
     },
+    imageUploadButton: {
+        padding: '0.5rem 1rem',
+        backgroundColor: '#6c757d',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        display: 'inline-block',
+        textAlign: 'center',
+        lineHeight: '1.5',
+    },
     saveButton: {
         padding: '0.5rem 1rem',
         backgroundColor: '#007bff',
@@ -115,6 +171,15 @@ const styles = {
         border: 'none',
         borderRadius: '5px',
         cursor: 'pointer',
+    },
+    preveiwContainer: {
+        marginTop: '1rem',
+        textAlign: 'center',
+    },
+    preveiwImage: {
+        maxWidth: '300px',
+        maxHeight: '300px',
+        borderRadius: '4px',
     }
 };
 

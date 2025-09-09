@@ -33,6 +33,10 @@ function App() {
       [dateKey]: newEntriesForDate,
     });
   };
+
+  const handleFabClick = () => {
+    setSelectedDate(new Date());
+  };
   
   const selectedDateEntries = selectedDate ? entries[`${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`] || [] : [];
 
@@ -70,6 +74,8 @@ function App() {
           <p>여기에 통계가 표시됩니다.</p>
         </aside>
       </main>
+
+      <button style={styles.fab} onClick={handleFabClick}>+</button>
     </div>
   );
 }
@@ -115,6 +121,20 @@ const styles = {
       border: '1px dashed #ccc',
       backgroundColor: '#f1f3f5',
     },
+    fab: {
+      position: 'fixed',
+      right: '30px',
+      bottom: '30px',
+      width: '60px',
+      height: '60px',
+      borderRadius: '50%',
+      backgroundColor: '#007bff',
+      color: 'white',
+      border: 'none',
+      fontSize: '2rem',
+      cursor: 'pointer',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    }
 };
 
 export default App;
