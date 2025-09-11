@@ -6,6 +6,9 @@ function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [entries, setEntries] = useState({});
+  const [mainEntryIds, setMainEntryIds] = useState([]);
+
+  console.log(entries)
 
   const handlePrevMonth = () => {
     setCurrentDate(prevDate => new Date(prevDate.getFullYear(), prevDate.getMonth() - 1, 1));
@@ -26,7 +29,13 @@ function App() {
     if (!selectedDate) return;
     const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
     const existingEntries = entries[dateKey] || [];
-    const newEntriesForDate = [...existingEntries, { id: Date.now(), ...entryData }];
+
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timestamp = `${hours}:${minutes}`;
+
+    const newEntriesForDate = [...existingEntries, { id: Date.now(), ...entryData, timestamp }];
 
     setEntries({
       ...entries,
@@ -34,11 +43,37 @@ function App() {
     });
   };
 
+  const handleSetMainEntry = (entryId) => {
+    console.log(mainEntryIds);
+    setMainEntryIds(prevIds => (prevIds.concat([entryId])));
+  };
+
+  const handleDeleteEntry = (dateKey, entryId) => {
+    const dayEntries = entries[dateKey] || [];
+    const newEntries = dayEntries.filter(entry => entry.id !== entryId);
+
+    setEntries(prevEntries => ({
+      ...prevEntries,
+      [dateKey]: newEntries,
+      id: newEntries
+    }));
+
+    if (mainEntryIds[dateKey] === entryId) {
+      setMainEntryIds(prevIds => {
+        const newIds = { ...prevIds };
+        delete newIds[dateKey];
+        return newIds;
+      });
+    }
+  };
+
   const handleFabClick = () => {
     setSelectedDate(new Date());
   };
   
-  const selectedDateEntries = selectedDate ? entries[`${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`] || [] : [];
+  const selectedDateKey = selectedDate ? `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}` : null;
+  const selectedDateEntries = selectedDateKey ? entries[selectedDateKey] || [] : [];
+  const selectedMainEntryId = selectedDateKey ? mainEntryIds[selectedDateKey] : null;
 
   const monthlyStats = useMemo(() => {
     const currentMonthEntries = [];
@@ -80,6 +115,7 @@ function App() {
             onDateClick={handleDateClick}
             entries={entries}
             selectedDate={selectedDate}
+            mainEntryIds={mainEntryIds}
           />
           {selectedDate && (
             <EntryDetail 
@@ -87,6 +123,10 @@ function App() {
               entries={selectedDateEntries}
               onSave={handleSaveEntry}
               onClose={handleCloseDetail}
+              dateKey={selectedDateKey}
+              mainEntryId={mainEntryIds}
+              onSetMain={handleSetMainEntry}
+              onDelete={handleDeleteEntry}
             />
           )}
         </section>

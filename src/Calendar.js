@@ -1,6 +1,6 @@
 import React from "react";
 
-const Calendar = ({ currentDate, onDateClick, entries, selectedDate }) => {
+const Calendar = ({ currentDate, onDateClick, entries, selectedDate, mainEntryIds }) => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
@@ -29,17 +29,29 @@ const Calendar = ({ currentDate, onDateClick, entries, selectedDate }) => {
                                selectedDate.getMonth() === month &&
                                selectedDate.getDate() === date;
 
+            const mainEntryId = mainEntryIds[dateKey];
+            const mainEntry = mainEntryId ? dayEntries.find(entry => entry.id === mainEntryId) : null;
+            
             const cellStyle = {
                 ...styles.dayCell,
                 position: 'relative',
                 backgroundColor: isSelected ? '#eaf6ff' : 'white',
                 fontWeight: isSelected ? 'bold' : 'normal',
+                backgroundImage: mainEntry && mainEntry.image ? `url(${mainEntry.image})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+            };
+
+            const dateNumberStyle = {
+                ...styles.dateNumber,
+                backgroundColor: mainEntry && mainEntry.image ? 'rgba(255, 255, 255, 0.7)' : 'transparent',
+                textShadow: mainEntry && mainEntry.image ? '0 0 3px white' : 'none',
             };
 
             calendarDays.push(
                 <div key={`date-${date}`} style={cellStyle} onClick={() => onDateClick(fullDate)}>
-                    {date}
-                    {dayEntries.length > 0 && <div style={styles.entryIndicator}></div>}
+                    <span style={dateNumberStyle}>{date}</span>
+                    {dayEntries.length > 0 && !(mainEntry && mainEntry.image) && <div style={styles.entryIndicator}></div>}
                 </div>
             );
         }
@@ -78,7 +90,12 @@ const styles = {
         border: '1px solid #f0f0f0',
         borderRadius: '8px',
         cursor: 'pointer',
-        transition: 'background-color 0.2s',
+        transition: 'all 0.2s',
+    },
+    dateNumber: {
+      padding: '2px 5px',
+      borderRadius: '4px',
+      transition: 'all 0.2s',
     },
     entryIndicator: {
         position: 'absolute',
@@ -91,4 +108,3 @@ const styles = {
 };
 
 export default Calendar;
-

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 
-const EntryDetail = ({ date, entries, onSave, onClose }) => {
+const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onSetMain, onDelete }) => {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
-  const [imagePreveiw, setImagePreveiw] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreveiw(reader.result);
+        setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -24,35 +24,43 @@ const EntryDetail = ({ date, entries, onSave, onClose }) => {
     onSave({ 
       amount: parseFloat(amount), 
       category,
-      image: imagePreveiw
+      image: imagePreview
     });
   
-
     setAmount('');
     setCategory('');
-    setImagePreveiw(null);
+    setImagePreview(null);
   };
 
   return (
     <div style={styles.detailContainer}>
       <div style={styles.detailHeader}>
         <h3>{`${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`}</h3>
-        <button onClick={onClose} style={styles.closeButton}></button>
+        <button onClick={onClose} style={styles.closeButton}>×</button>
       </div>
 
       <div style={styles.entryList}>
         {entries.length > 0 ? (
-          entries.map(entry => (
-            <div key={entry.id} style={styles.entryItem}>
-              {entry.image && (
-                <img src={entry.image} alt={entry.category} style={styles.entryImage} />
-              )}
-              <div style={styles.entryText}>
-                <span>{entry.category}</span>
-                <span>{entry.amount.toLocaleString()}원</span>
+          entries.map(entry => {
+            console.log(mainEntryId)
+            const isMain = mainEntryId.includes(entry.id);
+            return (
+              <div key={entry.id} style={styles.entryItem}>
+                <button onClick={() => onSetMain(entry.id)} style={isMain ? styles.mainButtonActive : styles.mainButton}>
+                  ★
+                </button>
+                {entry.image && (
+                  <img src={entry.image} alt={entry.category} style={styles.entryImage} />
+                )}
+                <div style={styles.entryText}>
+                  <span style={{ flex: 1 }}>{entry.category}</span>
+                  <span style={styles.entryTimestamp}>{entry.timestamp}</span>
+                  <span>{entry.amount.toLocaleString()}원</span>
+                </div>
+                <button onClick={() => onDelete(dateKey, entry.id)} style={styles.deleteButton}>×</button>
               </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           <p style={styles.noEntryText}>입력된 내역이 없습니다.</p>
         )}
@@ -76,20 +84,20 @@ const EntryDetail = ({ date, entries, onSave, onClose }) => {
           onChange={(e) => setAmount(e.target.value)}
         />
         <label style={styles.imageUploadButton}>
+          사진
           <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
         </label>
         <button onClick={handleSave} style={styles.saveButton}>추가</button>
       </div>
-      {imagePreveiw && (
-        <div style={styles.preveiwContainer}>
-          <img src={imagePreveiw} alt="Preview" style={styles.preveiwImage} />
+      {imagePreview && (
+        <div style={styles.previewContainer}>
+          <img src={imagePreview} alt="Preview" style={styles.previewImage} />
         </div>
       )}
     </div>
   );
 };
 
-// 이 컴포넌트에서만 사용하는 스타일 객체
 const styles = {
     detailContainer: {
         marginTop: '1rem',
@@ -119,12 +127,37 @@ const styles = {
         alignItems: 'center',
         padding: '0.5rem 0',
         borderBottom: '1px solid #eee',
+        gap: '10px', 
+    },
+    mainButton: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#ccc',
+      fontSize: '1.2rem',
+      padding: '0 5px'
+    },
+    mainButtonActive: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#ffc107',
+      fontSize: '1.2rem',
+      padding: '0 5px'
+    },
+    deleteButton: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#dc3545',
+      fontSize: '1.2rem',
+      padding: '0 5px',
+      fontWeight: 'bold'
     },
     entryImage: {
-        width: '70px',
-        height: '70px',
+        width: '40px',
+        height: '40px',
         borderRadius: '4px',
-        marginRight: '10px',
         objectFit: 'cover',
     },
     entryText: {
@@ -132,7 +165,12 @@ const styles = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        fontSize: '18px',
+        gap: '10px'
+    },
+    entryTimestamp: {
+      fontSize: '0.8em',
+      color: '#888',
+      margin: '0 10px',
     },
     noEntryText: {
         textAlign: 'center',
@@ -172,15 +210,16 @@ const styles = {
         borderRadius: '5px',
         cursor: 'pointer',
     },
-    preveiwContainer: {
+    previewContainer: {
         marginTop: '1rem',
         textAlign: 'center',
     },
-    preveiwImage: {
-        maxWidth: '300px',
-        maxHeight: '300px',
+    previewImage: {
+        maxWidth: '100px',
+        maxHeight: '100px',
         borderRadius: '4px',
     }
 };
 
 export default EntryDetail;
+
