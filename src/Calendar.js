@@ -1,6 +1,6 @@
 import React from "react";
 
-const Calendar = ({ currentDate, onDateClick, entries, selectedDate, mainEntryIds }) => {
+const Calendar = ({ currentDate, onDateClick, journal, selectedDate }) => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
@@ -21,41 +21,42 @@ const Calendar = ({ currentDate, onDateClick, entries, selectedDate, mainEntryId
 
         for (let date = 1; date <= lastDateOfMonth; date++) {
             const fullDate = new Date(year, month, date);
-            const dateKey = `${year}-${month}-${date}`;
-            const dayEntries = entries[dateKey] || [];
-            
-            const isSelected = selectedDate && 
-                               selectedDate.getFullYear() === year &&
-                               selectedDate.getMonth() === month &&
-                               selectedDate.getDate() === date;
+            const formattedDate = `${year}-${month}-${date}`;
+            const dayInJournal = journal[formattedDate];
+            const entryList = dayInJournal?.list || [];
+            const mainEntryId = dayInJournal?.mainEntryId;
 
-            const mainEntryId = mainEntryIds[dateKey];
-            const mainEntry = mainEntryId ? dayEntries.find(entry => entry.id === mainEntryId) : null;
-            
+            const isSelected = selectedDate &&
+                selectedDate.getFullYear() === year &&
+                selectedDate.getMonth() === month &&
+                selectedDate.getDate() === date;
+
+            const mainEntry = mainEntryId ? entryList.find(entry => entry.id === mainEntryId) : null;
+
             const cellStyle = {
                 ...styles.dayCell,
                 position: 'relative',
                 backgroundColor: isSelected ? '#eaf6ff' : 'white',
                 fontWeight: isSelected ? 'bold' : 'normal',
-                backgroundImage: mainEntry && mainEntry.image ? `url(${mainEntry.image})` : 'none',
+                backgroundImage: mainEntry?.image ? `url(${mainEntry.image})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
             };
 
             const dateNumberStyle = {
                 ...styles.dateNumber,
-                backgroundColor: mainEntry && mainEntry.image ? 'rgba(255, 255, 255, 0.7)' : 'transparent',
-                textShadow: mainEntry && mainEntry.image ? '0 0 3px white' : 'none',
+                backgroundColor: mainEntry?.image ? 'rgba(255, 255, 255, 0.7)' : 'transparent',
+                textShadow: mainEntry?.image ? '0 0 3px white' : 'none',
             };
 
             calendarDays.push(
                 <div key={`date-${date}`} style={cellStyle} onClick={() => onDateClick(fullDate)}>
                     <span style={dateNumberStyle}>{date}</span>
-                    {dayEntries.length > 0 && !(mainEntry && mainEntry.image) && <div style={styles.entryIndicator}></div>}
+                    {entryList.length > 0 && !mainEntry?.image && <div style={styles.entryIndicator}></div>}
                 </div>
             );
         }
-        
+
         return calendarDays;
     };
 
@@ -67,6 +68,7 @@ const Calendar = ({ currentDate, onDateClick, entries, selectedDate, mainEntryId
         </div>
     );
 };
+
 
 const styles = {
     calendarContainer: {

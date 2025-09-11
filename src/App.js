@@ -2,100 +2,103 @@ import React, { useState, useMemo } from "react";
 import Calendar from "./Calendar";
 import EntryDetail from "./EntryDetail";
 
+// 날짜 객체를 'YYYY-M-D' 형식의 문자열 키로 변환하는 헬퍼 함수
+const formatDateKey = (date) => {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+};
+
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const [entries, setEntries] = useState({});
-  const [mainEntryIds, setMainEntryIds] = useState([]);
-
-  console.log(entries)
+  //'journal'(기존의 entries) 전체 기록임을 명확히 함
+  const [journal, setJournal] = useState({});
 
   const handlePrevMonth = () => {
     setCurrentDate(prevDate => new Date(prevDate.getFullYear(), prevDate.getMonth() - 1, 1));
   };
+
   const handleNextMonth = () => {
     setCurrentDate(prevDate => new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 1));
   };
 
   const handleDateClick = (date) => {
-    setSelectedDate(date); 
+    setSelectedDate(date);
   };
-  
+
   const handleCloseDetail = () => {
     setSelectedDate(null);
-  }
+  };
 
-  const handleSaveEntry = (entryData) => {
+  // 'handleSaveEntry' -> 'addEntry'로 변경
+  const addEntry = (newEntryData) => {
     if (!selectedDate) return;
-    const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
-    const existingEntries = entries[dateKey] || [];
+    const formattedDate = formatDateKey(selectedDate);
+    const currentDay = journal[formattedDate] || { list: [], mainEntryId: null };
 
     const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const timestamp = `${hours}:${minutes}`;
+    const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const entryToAdd = { id: Date.now(), ...newEntryData, timestamp };
 
-    const newEntriesForDate = [...existingEntries, { id: Date.now(), ...entryData, timestamp }];
+    const updatedList = [...currentDay.list, entryToAdd];
 
-    setEntries({
-      ...entries,
-      [dateKey]: newEntriesForDate,
+    setJournal({
+      ...journal,
+      [formattedDate]: { ...currentDay, list: updatedList },
     });
   };
 
-  const handleSetMainEntry = (entryId) => {
-    console.log(mainEntryIds);
-    setMainEntryIds(prevIds => (prevIds.concat([entryId])));
+  // 'handleSetMainEntry' -> 'setMainEntry'로 변경
+  const setMainEntry = (entryId) => {
+    if (!selectedDate) return;
+    const formattedDate = formatDateKey(selectedDate);
+    const currentDay = journal[formattedDate];
+
+    setJournal({
+      ...journal,
+      [formattedDate]: { ...currentDay, mainEntryId: entryId },
+    });
   };
 
-  const handleDeleteEntry = (dateKey, entryId) => {
-    const dayEntries = entries[dateKey] || [];
-    const newEntries = dayEntries.filter(entry => entry.id !== entryId);
+  // 'handleDeleteEntry' -> 'deleteEntry'로 변경
+  const deleteEntry = (entryId) => {
+    if (!selectedDate) return;
+    const formattedDate = formatDateKey(selectedDate);
+    const currentDay = journal[formattedDate];
+    const updatedList = currentDay.list.filter(entry => entry.id !== entryId);
 
-    setEntries(prevEntries => ({
-      ...prevEntries,
-      [dateKey]: newEntries,
-      id: newEntries
-    }));
+    // 삭제된 항목이 대표 항목이었다면, 대표 항목 ID를 null로 설정
+    const newMainEntryId = currentDay.mainEntryId === entryId ? null : currentDay.mainEntryId;
 
-    if (mainEntryIds[dateKey] === entryId) {
-      setMainEntryIds(prevIds => {
-        const newIds = { ...prevIds };
-        delete newIds[dateKey];
-        return newIds;
-      });
-    }
+    setJournal({
+      ...journal,
+      [formattedDate]: { ...currentDay, list: updatedList, mainEntryId: newMainEntryId },
+    });
   };
 
   const handleFabClick = () => {
     setSelectedDate(new Date());
   };
-  
-  const selectedDateKey = selectedDate ? `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}` : null;
-  const selectedDateEntries = selectedDateKey ? entries[selectedDateKey] || [] : [];
-  const selectedMainEntryId = selectedDateKey ? mainEntryIds[selectedDateKey] : null;
+
+  const selectedFormattedDate = selectedDate ? formatDateKey(selectedDate) : null;
+  const selectedDay = selectedFormattedDate ? journal[selectedFormattedDate] : null;
 
   const monthlyStats = useMemo(() => {
-    const currentMonthEntries = [];
+    let totalAmount = 0;
+    const categoryAmounts = {};
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
 
-    for (const dateKey in entries) {
+    for (const dateKey in journal) {
       const [year, month] = dateKey.split('-').map(Number);
-
       if (year === currentYear && month === currentMonth) {
-        currentMonthEntries.push(...entries[dateKey]);
+        journal[dateKey].list.forEach(entry => {
+          totalAmount += entry.amount;
+          categoryAmounts[entry.category] = (categoryAmounts[entry.category] || 0) + entry.amount;
+        });
       }
     }
-
-    const totalAmount = currentMonthEntries.reduce((sum, entry) => sum + entry.amount, 0);
-    const categoryAmounts = currentMonthEntries.reduce((acc, entry) => {
-      acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
-      return acc;
-    }, {});
-    
     return { totalAmount, categoryAmounts };
-  }, [entries, currentDate]);
+  }, [journal, currentDate]);
 
   return (
     <div style={styles.container}>
@@ -110,23 +113,20 @@ function App() {
 
       <main style={styles.main}>
         <section style={styles.calendarSection}>
-          <Calendar 
-            currentDate={currentDate} 
+          <Calendar
+            currentDate={currentDate}
             onDateClick={handleDateClick}
-            entries={entries}
+            journal={journal}
             selectedDate={selectedDate}
-            mainEntryIds={mainEntryIds}
           />
           {selectedDate && (
-            <EntryDetail 
+            <EntryDetail
               date={selectedDate}
-              entries={selectedDateEntries}
-              onSave={handleSaveEntry}
+              selectedDay={selectedDay}
+              onAddEntry={addEntry}
               onClose={handleCloseDetail}
-              dateKey={selectedDateKey}
-              mainEntryId={mainEntryIds}
-              onSetMain={handleSetMainEntry}
-              onDelete={handleDeleteEntry}
+              onSetMainEntry={setMainEntry}
+              onDeleteEntry={deleteEntry}
             />
           )}
         </section>
@@ -148,7 +148,7 @@ function App() {
                 ))}
               </ul>
             ) : (
-              <p style={{textAlign: 'center', color: '#888', marginTop: '1rem'}}>내역 없음</p>
+              <p style={{ textAlign: 'center', color: '#888', marginTop: '1rem' }}>내역 없음</p>
             )}
           </div>
         </aside>
@@ -227,4 +227,3 @@ const styles = {
 };
 
 export default App;
-

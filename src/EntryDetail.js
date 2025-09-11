@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 
-const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onSetMain, onDelete }) => {
+const EntryDetail = ({ date, selectedDay, onAddEntry, onClose, onSetMainEntry, onDeleteEntry }) => {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
+
+  // selectedDay가 존재하면 list와 mainEntryId를 가져오고, 없으면 기본값 사용
+  const { list: entryList = [], mainEntryId = null } = selectedDay || {};
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -21,12 +24,14 @@ const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onS
       alert('금액과 카테고리를 모두 입력해주세요.');
       return;
     }
-    onSave({ 
-      amount: parseFloat(amount), 
+    const newEntry = {
+      amount: parseFloat(amount),
       category,
       image: imagePreview
-    });
-  
+    };
+    onAddEntry(newEntry);
+
+    // 입력 필드 초기화
     setAmount('');
     setCategory('');
     setImagePreview(null);
@@ -40,13 +45,12 @@ const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onS
       </div>
 
       <div style={styles.entryList}>
-        {entries.length > 0 ? (
-          entries.map(entry => {
-            console.log(mainEntryId)
-            const isMain = mainEntryId.includes(entry.id);
+        {entryList.length > 0 ? (
+          entryList.map(entry => {
+            const isMain = mainEntryId === entry.id;
             return (
               <div key={entry.id} style={styles.entryItem}>
-                <button onClick={() => onSetMain(entry.id)} style={isMain ? styles.mainButtonActive : styles.mainButton}>
+                <button onClick={() => onSetMainEntry(entry.id)} style={isMain ? styles.mainButtonActive : styles.mainButton}>
                   ★
                 </button>
                 {entry.image && (
@@ -57,7 +61,7 @@ const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onS
                   <span style={styles.entryTimestamp}>{entry.timestamp}</span>
                   <span>{entry.amount.toLocaleString()}원</span>
                 </div>
-                <button onClick={() => onDelete(dateKey, entry.id)} style={styles.deleteButton}>×</button>
+                <button onClick={() => onDeleteEntry(entry.id)} style={styles.deleteButton}>×</button>
               </div>
             )
           })
@@ -69,16 +73,16 @@ const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onS
       <hr style={styles.hr} />
 
       <div style={styles.formContainer}>
-        <input 
-          type="text" 
-          style={styles.input} 
+        <input
+          type="text"
+          style={styles.input}
           placeholder="카테고리"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
-        <input 
-          type="number" 
-          style={styles.input} 
+        <input
+          type="number"
+          style={styles.input}
           placeholder="금액"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -97,6 +101,7 @@ const EntryDetail = ({ date, entries, onSave, onClose, dateKey, mainEntryId, onS
     </div>
   );
 };
+
 
 const styles = {
     detailContainer: {
@@ -127,7 +132,7 @@ const styles = {
         alignItems: 'center',
         padding: '0.5rem 0',
         borderBottom: '1px solid #eee',
-        gap: '10px', 
+        gap: '10px',
     },
     mainButton: {
       background: 'none',
@@ -222,4 +227,3 @@ const styles = {
 };
 
 export default EntryDetail;
-
